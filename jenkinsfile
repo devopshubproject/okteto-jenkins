@@ -7,63 +7,66 @@
 
 pipeline {
 
-        agent any
+    agent any
+    
+    environment {
+        GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
+        DOCKER_FILE = '${env.WORKSPACE}'
+        GIT_REPO_NAME = 'okteto-jenkins'
+        CONTAINER_IMAGE = 'premkumarpalanichamy/httpd-okteto-jenkins'
+        BUILD_TAG = 'latest'
+        NAMESPACE = 'premkumar-palanichamy'
+    }
+
+    stages {    
         
-        environment {
-            GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
-            DOCKER_FILE = '${env.WORKSPACE}'
-            GIT_REPO_NAME = 'okteto-jenkins'
-            CONTAINER_IMAGE = 'premkumarpalanichamy/httpd-okteto-jenkins'
-            BUILD_TAG = 'latest'
+        stage('Prepare Environment with Okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    cleanWs ()
+                    sh '''
+                    okteto login --token ${SECRET}
+                    '''
+                }
+            }
         }
 
-        stages {    
-            
-            stage('Prepare Environment with Okteto') {
-                steps {
-                    withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
-                        cleanWs ()
-                        sh '''
-                        okteto login --token ${SECRET}
-                        '''
-                    }
-                }
+        stage ('Download the source code from GitHub') {
+            steps {
+                    sh '''
+                    git clone "${GIT_PROJECT}"
+                    '''
             }
-
-            stage ('Download the source code from GitHub') {
-                steps {
-                        sh '''
-                        git clone "${GIT_PROJECT}"
-                        '''
-                }
-            }
-                
-            stage ('Build and Push Image with Okteto') {
-                steps {
-                    withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
-                        sh '''
-                        okteto login --token ${SECRET} /
-                        cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
-                        okteto build -t ${CONTAINER_IMAGE}:${BUILD_TAG} .
-                        '''
-                    }    
-                }
-            }
-            
-            stage('Deploy Nginx to okteto') {
-                steps {
-                    withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
-                        def output = sh returnStdout: true, script: '''
-                        ${OKTETO_DIR}/okteto login --token ${SECRET}
-                        cd ${HOME}/nginx-k8s
-                        ${OKTETO_DIR}/okteto namespace
-                        ${KUBECTL_DIR}/kubectl apply -f nginx-deploy.yaml
-                        ${KUBECTL_DIR}/kubectl rollout status deployment.apps/nginx
-                        '''
-                        println output
-                    }
-                }
-            } */
         }
+            
+        stage ('Build and Push Image with Okteto') {
+            steps {
+                withCredentials([
+                    string(credentialsId: 'okteto-token', variable: 'SECRET'),
+                    usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
+                ]) {
+                    sh '''
+                    okteto login --token ${SECRET} /
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
+                    docker login -u $USERNAME -p $PASSWORD
+                    okteto build --tag ${CONTAINER_IMAGE}:${BUILD_TAG} --file dockerfile
+                    '''
+                }    
+            }
+        }
+        
+        stage('Deploy httpd to okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    sh '''
+                    okteto login --token ${SECRET}
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
+                    okteto namespace ${NAMESPACE}
+                    kubectl apply -f httpd-deploy.yaml
+                    kubectl rollout status deployment.apps/httpd-deployment
+                        '''
+                }
+            }
+        } 
     }
 }
