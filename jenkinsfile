@@ -11,12 +11,15 @@ pipeline {
         
         environment {
             GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
+            DOCKER_FILE = '${env.WORKSPACE}'
+            GIT_REPO_NAME = 'okteto-jenkins'
             CONTAINER_IMAGE = 'premkumarpalanichamy/httpd-okteto-jenkins'
             BUILD_TAG = 'latest'
+        }
 
         stages {    
             
-            stage ('Prepare Environment with Okteto ') {
+            stage('Prepare Environment with Okteto') {
                 steps {
                     withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
                         cleanWs ()
@@ -26,23 +29,23 @@ pipeline {
                     }
                 }
             }
-/*
+
             stage ('Download the source code from GitHub') {
                 steps {
-                    //    git url: "${GIT_PROJECT}"
-                        def output = sh returnStdout: true, script: '''git clone "${GIT_PROJECT}"'''
-                        println output
+                        sh '''
+                        git clone "${GIT_PROJECT}"
+                        '''
                 }
             }
                 
             stage ('Build and Push Image with Okteto') {
                 steps {
                     withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
-                        def output = sh returnStdout: true, script: '''
-                        ${OKTETO_DIR}/okteto login --token ${SECRET}
-                        ${OKTETO_DIR}/okteto build -t ${CONTAINER_IMAGE}:${BUILD_TAG} .
+                        sh '''
+                        okteto login --token ${SECRET} /
+                        cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
+                        okteto build -t ${CONTAINER_IMAGE}:${BUILD_TAG} .
                         '''
-                        println output
                     }    
                 }
             }
