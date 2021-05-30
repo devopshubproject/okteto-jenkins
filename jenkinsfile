@@ -7,6 +7,8 @@
 
 pipeline {
 
+        agent any
+        
         environment {
 
             //OKTETO_DIR = tool name: 'okteto', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
