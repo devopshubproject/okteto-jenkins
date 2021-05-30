@@ -1,0 +1,55 @@
+
+//Author: Prem Kumar Palanichamy
+
+//Jenkins Pipeline to handle the Continuous Integration and Continuous Deployment on Okteto.
+//Prerequisites: you should install the Custom tools plugin on Jenkins, ... 
+//...get the okteto CLI and Kubectl. You also need to get your Okteto Token and save it on a Jenkins Credential
+
+pipeline {
+
+    agent any
+    
+    environment {
+        GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
+        DOCKER_FILE = '${env.WORKSPACE}'
+        GIT_REPO_NAME = 'okteto-jenkins'
+        NAMESPACE = 'premkumar-palanichamy'
+    }
+
+    stages {    
+        
+        stage('Prepare Environment with Okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    cleanWs ()
+                    sh '''
+                    okteto login --token ${SECRET}
+                    '''
+                }
+            }
+        }
+
+        stage ('Download the source code from GitHub') {
+            steps {
+                    sh '''
+                    git clone "${GIT_PROJECT}"
+                    '''
+            }
+        }
+            
+        stage('Deploy nginx to okteto <To Prove Success>') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    sh '''
+                    okteto login --token ${SECRET}
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/nginx"
+                    okteto namespace ${NAMESPACE}
+                    kubectl apply -f nginx-deploy.yaml
+                    kubectl rollout status deployment.apps/nginx
+                    '''
+                }
+            }
+        } 
+        
+    }
+}

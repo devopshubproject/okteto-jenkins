@@ -1,0 +1,77 @@
+
+//Author: Prem Kumar Palanichamy
+
+//Jenkins Pipeline to handle the Continuous Integration and Continuous Deployment on Okteto.
+//Prerequisites: you should install the Custom tools plugin on Jenkins, ... 
+//...get the okteto CLI and Kubectl. You also need to get your Okteto Token and save it on a Jenkins Credential
+
+pipeline {
+
+    agent any
+    
+    environment {
+        GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
+        DOCKER_FILE = '${env.WORKSPACE}'
+        GIT_REPO_NAME = 'okteto-jenkins'
+        CONTAINER_IMAGE = 'premkumarpalanichamy/httpd-okteto-jenkins'
+        BUILD_TAG = 'latest'
+        NAMESPACE = 'premkumar-palanichamy'
+    }
+
+    stages {    
+        
+        stage('Prepare Environment with Okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    cleanWs ()
+                    sh '''
+                    okteto login --token ${SECRET}
+                    '''
+                }
+            }
+        }
+
+        stage ('Download the source code from GitHub') {
+            steps {
+                    sh '''
+                    git clone "${GIT_PROJECT}"
+                    '''
+            }
+        }
+            
+        stage ('Clean up the Env') {
+            steps {
+                    sh '''
+                    docker system prune -a
+                    '''    
+            }
+        }
+
+        stage('Destroy nginx on okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    sh '''
+                    okteto login --token ${SECRET}
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/nginx"
+                    okteto namespace ${NAMESPACE}
+                    kubectl rollout status deployment.apps/nginx
+                    kubectl delete -f nginx-deploy.yaml
+                    '''
+                }
+            }
+        } 
+        
+        stage('Destroy httpd on okteto') {
+            steps {
+                withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
+                    sh '''
+                    okteto login --token ${SECRET}
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
+                    okteto namespace ${NAMESPACE}
+                    kubectl delete -f httpd-deploy.yaml
+                    '''
+                }
+            }
+        } 
+    }
+}
