@@ -11,7 +11,7 @@ pipeline {
     
     environment {
         GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
-        DOCKER_FILE = '${env.WORKSPACE}'
+        DOCKER_FILE = '/var/lib/jenkins/workspace/okteto-jenkins'
         GIT_REPO_NAME = 'okteto-jenkins'
         NAMESPACE = 'premkumar-palanichamy'
     }
