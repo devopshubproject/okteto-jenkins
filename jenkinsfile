@@ -23,11 +23,11 @@ pipeline {
             stage ('Prepare Environment with Okteto ') {
                 steps {
                     withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
-                        cleanWs deleteDirs: true
-                        def output = sh returnStdout: true, script: '''
-                        ${OKTETO_DIR}/okteto login --token ${SECRET}
+                        cleanWs ()
+                        sh '''
+                        output = ${OKTETO_DIR}/okteto login --token ${SECRET}
                         '''
-                        println output
+                        echo "output"
                     }
                 }
             }
