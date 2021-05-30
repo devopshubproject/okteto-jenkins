@@ -60,6 +60,7 @@ pipeline {
                 withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
                     sh '''
                     okteto login --token ${SECRET}
+                    cd "${DOCKER_FILE}/${GIT_REPO_NAME}/nginx"
                     okteto namespace ${NAMESPACE}
                     kubectl apply -f nginx-deploy.yaml
                     kubectl rollout status deployment.apps/nginx
