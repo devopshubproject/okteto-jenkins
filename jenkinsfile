@@ -10,10 +10,6 @@ pipeline {
         agent any
         
         environment {
-
-            //OKTETO_DIR = tool name: 'okteto', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
-            HOME = "${WORKSPACE}"
-            //KUBECTL_DIR = tool name: 'kubectl', type: 'com.cloudbees.jenkins.plugins.customtools.CustomTool'
             GIT_PROJECT = 'https://github.com/devopshubproject/okteto-jenkins.git'
             CONTAINER_IMAGE = 'premkumarpalanichamy/httpd-okteto-jenkins'
             BUILD_TAG = 'latest'
@@ -25,7 +21,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
                         cleanWs ()
                         sh '''
-                        ${OKTETO_DIR}/okteto login --token ${SECRET}
+                        okteto login --token ${SECRET}
                         '''
                     }
                 }
