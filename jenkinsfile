@@ -25,9 +25,8 @@ pipeline {
                     withCredentials([string(credentialsId: 'okteto-token', variable: 'SECRET')]) {
                         cleanWs ()
                         sh '''
-                        output = ${OKTETO_DIR}/okteto login --token ${SECRET}
+                        ${OKTETO_DIR}/okteto login --token ${SECRET}
                         '''
-                        echo "output"
                     }
                 }
             }
