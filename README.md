@@ -80,4 +80,3 @@ Added all its supporting optional attributes are very similar to docker commands
 
 ~~Reference~~
 - https://okteto.com/docs/cloud#:~:text=okteto%20cloud%20gives%20you%20free%20access%20to%20secure%20kubernetes%20namespaces%2C%20fully%20integrated%20with%20remote%20development%20capabilities.%20develop%20your%20kubernetes%20applications%20in%20okteto%20cloud%20and%20forget%20about%20slow%20and%20tedious%20local%20development%20forever.
-- 
