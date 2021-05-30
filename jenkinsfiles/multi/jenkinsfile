@@ -46,7 +46,7 @@ pipeline {
                     usernamePassword(credentialsId: 'dockerhub-cred', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')
                 ]) {
                     sh '''
-                    okteto login --token ${SECRET} /
+                    okteto login --token ${SECRET}
                     cd "${DOCKER_FILE}/${GIT_REPO_NAME}/httpd"
                     docker login -u $USERNAME -p $PASSWORD
                     okteto build --tag ${CONTAINER_IMAGE}:${BUILD_TAG} --file dockerfile
